@@ -92,7 +92,6 @@ namespace ConsoleApp1
                     }
                 }
 
-
                 foreach (var city in citys)
                 {
                     var getUrl = $"{url}{city.ProvinceId}/{city.Id}.html";
