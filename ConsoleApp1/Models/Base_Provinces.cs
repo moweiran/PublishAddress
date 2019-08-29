@@ -8,7 +8,9 @@ namespace Models
 {
     public class Base_Provinces
     {
-        public decimal ProvinceId { get; set; }
+        public string Id { get; set; }
+        public string Code { get; set; }
+        public string ProvinceId { get; set; }
         public string ProvinceName { get; set; }
     }
 }

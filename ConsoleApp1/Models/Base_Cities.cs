@@ -8,8 +8,12 @@ namespace Models
 {
     public class Base_Cities
     {
-        public decimal CityId { get; set; }
+        public string Id { get; set; }
+        public string Code { get; set; }
+        public string CityId { get; set; }
         public string CityName { get; set; }
-        public decimal ProvinceId { get; set; }
+        public string ProvinceId { get; set; }
+        public string Province_Id { get; set; }
+        public string ProvinceName { get; internal set; }
     }
 }
