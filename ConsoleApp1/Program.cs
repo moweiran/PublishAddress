@@ -32,8 +32,6 @@ namespace ConsoleApp1
                 List<Base_Counties> countys = new List<Base_Counties>();
                 List<Base_Towns> towns = new List<Base_Towns>();
                 List<Base_Villages> villages = new List<Base_Villages>();
-                HtmlDocument doc = null;
-                HtmlNode rootNode = null;
                 using (IDbConnection conn = Connection)
                 {
                     string sQuery = "SELECT Id,Code,ProvinceId,ProvinceName FROM Base_Provinces";
@@ -42,8 +40,8 @@ namespace ConsoleApp1
                 }
                 if (provinces.Count == 0)
                 {
-                    doc = GetDocument($"{url}index.html");
-                    rootNode = doc.DocumentNode;
+                    HtmlDocument doc = GetDocument($"{url}index.html");
+                    HtmlNode rootNode = doc.DocumentNode;
                     var provinceas = rootNode.SelectNodes("//tr[@class='provincetr']/td/a[@href]");
                     foreach (var provincea in provinceas)
                     {
@@ -80,8 +78,8 @@ namespace ConsoleApp1
                     {
                         var getUrl = $"{url}{province.Id}.html";
                         Console.WriteLine($"cityUrl:{getUrl}");
-                        doc = GetDocument(getUrl);
-                        rootNode = doc.DocumentNode;
+                        HtmlDocument doc = GetDocument(getUrl);
+                        HtmlNode rootNode = doc.DocumentNode;
                         var citytrs = rootNode.SelectNodes("//tr[@class='citytr']");
                         foreach (var citytr in citytrs)
                         {
@@ -124,8 +122,8 @@ namespace ConsoleApp1
                     {
                         var getUrl = $"{url}{city.ProvinceId}/{city.Id}.html";
                         Console.WriteLine($"countyUrl:{getUrl}");
-                        doc = GetDocument(getUrl);
-                        rootNode = doc.DocumentNode;
+                        HtmlDocument doc = GetDocument(getUrl);
+                        HtmlNode rootNode = doc.DocumentNode;
                         var trs = rootNode.SelectNodes("//tr[@class='countytr']");
                         if (trs != null)
                         {
@@ -229,8 +227,8 @@ namespace ConsoleApp1
                             getUrl = $"{url}{county.ProvinceId}/{county.City_Id.Substring(2, 2)}/{county.Id}.html";
                         }
                         Console.WriteLine($"townUrl:{getUrl}");
-                        doc = GetDocument(getUrl);
-                        rootNode = doc.DocumentNode;
+                        HtmlDocument doc = GetDocument(getUrl);
+                        HtmlNode rootNode = doc.DocumentNode;
                         var trs = rootNode.SelectNodes("//tr[@class='towntr']");
                         if (trs != null)
                         {
@@ -287,8 +285,8 @@ namespace ConsoleApp1
                         getUrl = $"{url}{town.ProvinceId}/{town.City_Id.Substring(2, 2)}/{town.County_Id.Substring(4, 2)}/{town.Id}.html";
                     }
                     Console.WriteLine($"villageUrl:{getUrl}");
-                    doc = GetDocument(getUrl);
-                    rootNode = doc.DocumentNode;
+                    HtmlDocument doc = GetDocument(getUrl);
+                    HtmlNode rootNode = doc.DocumentNode;
                     var trs = rootNode.SelectNodes("//tr[@class='villagetr']");
                     foreach (var tr in trs)
                     {
@@ -304,7 +302,7 @@ namespace ConsoleApp1
                             TownName = town.TownName,
                             CountyId = town.CountyId,
                             CountyName = town.CountyName,
-                            CityId = town.CityId,
+                            CityId = town.CityId, 
                             CityName = town.CityName,
                             ProvinceId = town.ProvinceId,
                             ProvinceName = town.ProvinceName
@@ -343,11 +341,10 @@ namespace ConsoleApp1
                 })
                 .Execute(() =>
                 {
-                    var html = HttpServiceHelper.Get(url, 3);
+                    var html = HttpServiceHelper.Get(url, 1);
                     doc.LoadHtml(html);
-
                 });    //要执行的方法
-            Thread.Sleep(500);
+            //Thread.Sleep(100);
             return doc;
         }
     }

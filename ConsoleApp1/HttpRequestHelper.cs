@@ -31,13 +31,14 @@ namespace ConsoleApp1
                 * ************************************************************/
                 request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "GET";
-                request.Timeout = timeout * 1000;
+                //request.Timeout = timeout * 1000;
                 //获取服务端返回
                 response = (HttpWebResponse)request.GetResponse();
                 //获取服务端返回数据
                 StreamReader sr = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("GB2312"));
                 result = sr.ReadToEnd().Trim();
                 sr.Close();
+                sr.Dispose();
             }
             catch (System.Threading.ThreadAbortException e)
             {
@@ -57,7 +58,6 @@ namespace ConsoleApp1
             }
             catch (Exception e)
             {
-                //Logger.Instance.Error("HttpService" + e.ToString());
                 throw new Exception(e.ToString());
             }
             finally
