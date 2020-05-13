@@ -14,7 +14,7 @@ namespace ConsoleApp1
 {
     public class ProvinceManage
     {
-        public List<Models.Base_Provinces> Handle(string url)
+        public void Handle(string url)
         {
             List<Models.Base_Provinces> provinces = new List<Base_Provinces>();
             using (IDbConnection conn = DBHelper.Connection)
@@ -41,13 +41,13 @@ namespace ConsoleApp1
                         Code = code,
                         ProvinceId = code,
                         ProvinceName = name,
+                        IsCompleted = false
                     });
                 }
                 SqlBulkCopyHelper db = new SqlBulkCopyHelper();
                 db.CommonBulkCopy(provinces, null);
                 Console.WriteLine("省份结束");
             }
-            return provinces;
         }
     }
 }

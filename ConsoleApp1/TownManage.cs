@@ -14,19 +14,17 @@ namespace ConsoleApp1
 {
     public class TownManage
     {
-        public List<Base_Towns> Handle(string url, List<Base_Counties> countys)
+        public void Handle(string url)
         {
-            List<Base_Towns> towns = new List<Base_Towns>();
+            List<Base_Counties> countys = new List<Base_Counties>();
             using (IDbConnection conn = DBHelper.Connection)
             {
-                string sQuery = "SELECT Id,Code,TownId,TownName,CountyId,County_Id,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Towns";
+                string sQuery = "SELECT Id,Code,CountyId,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName,IsHasChildren FROM Base_Counties where IsCompleted!=1";
                 conn.Open();
-                towns = conn.Query<Base_Towns>(sQuery).ToList();
-            }
-            if (towns.Count == 0)
-            {
+                countys = conn.Query<Base_Counties>(sQuery).ToList();
                 foreach (var county in countys)
                 {
+                    List<Base_Towns> towns = new List<Base_Towns>();
                     if (!county.IsHasChildren)
                     {
                         continue;
@@ -68,16 +66,18 @@ namespace ConsoleApp1
                                 CityName = county.CityName,
                                 CountyId = county.CountyId,
                                 County_Id = county.Id,
-                                CountyName = county.CountyName
+                                CountyName = county.CountyName,
+                                IsCompleted = false
                             });
                         }
                     }
+                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                    db.CommonBulkCopy(towns, null);
+                    string updateCounty = $"update Base_Counties set IsCompleted =1 where CountyId= '{county.CountyId}'";
+                    conn.Execute(updateCounty);
                 }
-                SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                db.CommonBulkCopy(towns, null);
                 Console.WriteLine("乡镇结束");
             }
-            return towns;
         }
     }
 }

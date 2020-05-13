@@ -27,26 +27,16 @@ namespace ConsoleApp1
             {
                 var url = "http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2019/";
                 Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                List<Base_Provinces> provinces = new List<Base_Provinces>();
-                List<Base_Cities> citys = new List<Base_Cities>();
-                List<Base_Counties> countys = new List<Base_Counties>();
-                List<Base_Towns> towns = new List<Base_Towns>();
-                List<Base_Villages> villages = new List<Base_Villages>();
-
                 var provinceManage = new ProvinceManage();
-                provinces = provinceManage.Handle(url);
-
+                provinceManage.Handle(url);
                 var cityManage = new CityManage();
-                citys= cityManage.Handle(url, provinces );
-
+                cityManage.Handle(url );
                 var countyManage = new CountyManage();
-                countys= countyManage.Handle(url, citys );
-
+                countyManage.Handle(url );
                 var townManage = new TownManage();
-                towns = townManage.Handle(url, countys);
-
+                townManage.Handle(url);
                 var villageManage = new VillageManage();
-                villages= villageManage.Handle(url, towns);
+                villageManage.Handle(url);
             }
             catch (Exception ex)
             {

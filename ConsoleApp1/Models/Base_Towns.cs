@@ -21,5 +21,6 @@ namespace Models
         public string ProvinceName { get; internal set; }
         public string CityName { get; internal set; }
         public string CountyName { get; internal set; }
+        public bool? IsCompleted { get; set; }
     }
 }

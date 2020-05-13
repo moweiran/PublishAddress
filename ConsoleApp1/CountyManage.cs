@@ -14,19 +14,17 @@ namespace ConsoleApp1
 {
     public class CountyManage
     {
-        public List<Base_Counties> Handle(string url, List<Base_Cities> citys)
+        public void Handle(string url)
         {
-            List<Base_Counties> countys = new List<Base_Counties>();
+            List<Base_Cities> citys = new List<Base_Cities>();           
             using (IDbConnection conn = DBHelper.Connection)
             {
-                string sQuery = "SELECT Id,Code,CountyId,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName,IsHasChildren FROM Base_Counties";
+                string sQuery = "SELECT Id,Code,CityId,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Cities where IsCompleted!=1";
                 conn.Open();
-                countys = conn.Query<Base_Counties>(sQuery).ToList();
-            }
-            if (countys.Count == 0)
-            {
+                citys = conn.Query<Base_Cities>(sQuery).ToList();
                 foreach (var city in citys)
                 {
+                    List<Base_Counties> countys = new List<Base_Counties>();
                     var getUrl = $"{url}{city.ProvinceId}/{city.Id}.html";
                     Console.WriteLine($"countyUrl:{getUrl}");
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
@@ -56,7 +54,8 @@ namespace ConsoleApp1
                                     CityId = city.CityId,
                                     City_Id = city.Id,
                                     CityName = city.CityName,
-                                    IsHasChildren = true
+                                    IsHasChildren = true,
+                                    IsCompleted = false
                                 });
                             }
                             else
@@ -76,7 +75,8 @@ namespace ConsoleApp1
                                     CityId = city.CityId,
                                     City_Id = city.Id,
                                     CityName = city.CityName,
-                                    IsHasChildren = false
+                                    IsHasChildren = false,
+                                    IsCompleted = false
                                 });
                             }
                         }
@@ -98,17 +98,17 @@ namespace ConsoleApp1
                             CityId = city.CityId,
                             City_Id = city.Id,
                             CityName = city.CityName,
-                            IsHasChildren = true
+                            IsHasChildren = true,
+                            IsCompleted = false
                         });
                     }
-
+                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                    db.CommonBulkCopy(countys, null);
+                    string updateCity = $"update Base_Cities set IsCompleted =1 where CityId= '{city.CityId}'";
+                    conn.Execute(updateCity);
                 }
-
-                SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                db.CommonBulkCopy(countys, null);
                 Console.WriteLine("区县结束");
             }
-            return countys;
         }
     }
 }

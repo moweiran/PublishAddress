@@ -14,19 +14,17 @@ namespace ConsoleApp1
 {
     public class CityManage
     {
-        public List<Base_Cities> Handle(string url, List<Base_Provinces> provinces)
+        public void Handle(string url)
         {
-            List<Base_Cities> citys = new List<Base_Cities>();
+            List<Base_Provinces> provinces = new List<Base_Provinces>();           
             using (IDbConnection conn = DBHelper.Connection)
             {
-                string sQuery = "SELECT Id,Code,CityId,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Cities";
+                string sQuery = "SELECT Id,Code,ProvinceId,ProvinceName FROM Base_Provinces where IsCompleted!=1";
                 conn.Open();
-                citys = conn.Query<Base_Cities>(sQuery).ToList();
-            }
-            if (citys.Count == 0)
-            {
+                provinces = conn.Query<Base_Provinces>(sQuery).ToList();
                 foreach (var province in provinces)
                 {
+                    List<Base_Cities> citys = new List<Base_Cities>();
                     var getUrl = $"{url}{province.Id}.html";
                     Console.WriteLine($"cityUrl:{getUrl}");
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
@@ -48,15 +46,17 @@ namespace ConsoleApp1
                             CityName = name,
                             ProvinceId = province.ProvinceId,
                             Province_Id = province.Id,
-                            ProvinceName = province.ProvinceName
+                            ProvinceName = province.ProvinceName,
+                            IsCompleted = false
                         });
                     }
+                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                    db.CommonBulkCopy(citys, null);
+                    string udpateProvince = $"update Base_Provinces set IsCompleted =1 where provinceId= '{province.ProvinceId}'";
+                    conn.Execute(udpateProvince);
                 }
-                SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                db.CommonBulkCopy(citys, null);
                 Console.WriteLine("城市结束");
-            }
-            return citys;
+            }            
         }
     }
 }

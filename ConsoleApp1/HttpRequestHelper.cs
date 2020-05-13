@@ -33,7 +33,7 @@ namespace ConsoleApp1
                 request = (HttpWebRequest)WebRequest.Create(url);
                 request.Method = "GET";
                 request.KeepAlive = false;
-                //request.Timeout = timeout * 1000;
+                request.Timeout = timeout * 1000;
                 //获取服务端返回
                 response = (HttpWebResponse)request.GetResponse();
                 //获取服务端返回数据

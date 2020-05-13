@@ -3,6 +3,7 @@ using Polly;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace ConsoleApp1
 {
@@ -19,10 +20,10 @@ namespace ConsoleApp1
                 })
                 .Execute(() =>
                 {
-                    var html = HttpServiceHelper.Get(url, 1);
+                    var html = HttpServiceHelper.Get(url, 3);
                     doc.LoadHtml(html);
                 });    //要执行的方法
-            //Thread.Sleep(100);
+            Thread.Sleep(100);
             return doc;
         }
     }

@@ -19,5 +19,6 @@ namespace Models
         public bool IsHasChildren { get; internal set; }
         public string CityName { get; internal set; }
         public string ProvinceName { get; internal set; }
+        public bool? IsCompleted { get; set; }
     }
 }
