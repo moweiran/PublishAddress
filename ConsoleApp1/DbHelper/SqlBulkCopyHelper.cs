@@ -7,7 +7,6 @@ namespace ConsoleApp1.DbHelper
 {
     public class SqlBulkCopyHelper
     {
-        private const string _connectionString = @"Server=.\sql2008r2;Initial Catalog=Address;User ID=sa;Password=sasa;Connection Timeout=300;MultipleActiveResultSets=True;";
         /// <summary>
         /// 批量新增处理方法
         /// 保证传入的泛型类和数据库结构一致（区分大小写）
@@ -35,7 +34,7 @@ namespace ConsoleApp1.DbHelper
             }
             else
             {
-                using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(_connectionString, SqlBulkCopyOptions.Default))
+                using (SqlBulkCopy sqlBulkCopy = new SqlBulkCopy(DBHelper.ConnectionString, SqlBulkCopyOptions.Default))
                 {
                     using (var reader = list.GetDataReader<T>())
                     {
