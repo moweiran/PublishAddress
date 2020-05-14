@@ -35,7 +35,7 @@ namespace ConsoleApp1
                         doc.LoadHtml(html);
                         HtmlNode rootNode = doc.DocumentNode;
                         var citytrs = rootNode.SelectNodes("//tr[@class='citytr']");
-                        if (citytrs != null)
+                        if (citytrs == null)
                         {
                             throw new Exception();
                         }
