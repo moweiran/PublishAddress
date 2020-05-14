@@ -16,7 +16,7 @@ namespace ConsoleApp1
             return true;
         }
 
-        public static string Get(string url,int timeout)
+        public static string Get(string url, int timeout)
         {
             System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
             string result = "";//返回结果
@@ -36,10 +36,15 @@ namespace ConsoleApp1
                 request.Timeout = timeout * 1000;
                 request.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36");
                 //获取服务端返回
-                response = (HttpWebResponse)request.GetResponse();
-                //获取服务端返回数据
-                sr = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("GB2312"));
-                result = sr.ReadToEnd().Trim();               
+                using (response = (HttpWebResponse)request.GetResponse())
+                {
+                    //获取服务端返回数据
+                    using(sr = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("GB2312")))
+                    {
+
+                        result = sr.ReadToEnd().Trim();
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -51,6 +56,7 @@ namespace ConsoleApp1
                 if (sr != null)
                 {
                     sr.Close();
+                    sr.Dispose();
                 }
                 if (response != null)
                 {
