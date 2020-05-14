@@ -16,7 +16,7 @@ namespace ConsoleApp1
     {
         public void Handle(string url)
         {
-            List<Base_Provinces> provinces = new List<Base_Provinces>();           
+            List<Base_Provinces> provinces = new List<Base_Provinces>();
             using (IDbConnection conn = DBHelper.Connection)
             {
                 string sQuery = "SELECT Id,Code,ProvinceId,ProvinceName FROM Base_Provinces where IsCompleted!=1";
@@ -30,6 +30,10 @@ namespace ConsoleApp1
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
                     HtmlNode rootNode = doc.DocumentNode;
                     var citytrs = rootNode.SelectNodes("//tr[@class='citytr']");
+                    if (citytrs != null)
+                    {
+                        continue;
+                    }
                     foreach (var citytr in citytrs)
                     {
                         var cityas = citytr.SelectNodes("./td/a[@href]");
@@ -50,13 +54,16 @@ namespace ConsoleApp1
                             IsCompleted = false
                         });
                     }
-                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                    db.CommonBulkCopy(citys, null);
-                    string udpateProvince = $"update Base_Provinces set IsCompleted =1 where provinceId= '{province.ProvinceId}'";
-                    conn.Execute(udpateProvince);
+                    if (citys.Count > 0)
+                    {
+                        SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                        db.CommonBulkCopy(citys, null);
+                        string udpateProvince = $"update Base_Provinces set IsCompleted =1 where provinceId= '{province.ProvinceId}'";
+                        conn.Execute(udpateProvince);
+                    }
                 }
                 Console.WriteLine("城市结束");
-            }            
+            }
         }
     }
 }

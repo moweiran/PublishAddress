@@ -16,7 +16,7 @@ namespace ConsoleApp1
     {
         public void Handle(string url)
         {
-            List<Base_Cities> citys = new List<Base_Cities>();           
+            List<Base_Cities> citys = new List<Base_Cities>();
             using (IDbConnection conn = DBHelper.Connection)
             {
                 string sQuery = "SELECT Id,Code,CityId,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Cities where IsCompleted!=1";
@@ -29,10 +29,15 @@ namespace ConsoleApp1
                     Console.WriteLine($"countyUrl:{getUrl}");
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
                     HtmlNode rootNode = doc.DocumentNode;
-                    var trs = rootNode.SelectNodes("//tr[@class='countytr']");
-                    if (trs != null)
+                    var countytrs = rootNode.SelectNodes("//tr[@class='countytr']");
+                    var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
+                    if (countytrs == null && towntrs == null)
                     {
-                        foreach (var tr in trs)
+                        continue;
+                    }
+                    if (countytrs != null)
+                    {
+                        foreach (var tr in countytrs)
                         {
                             var tdas = tr.SelectNodes("./td/a[@href]");
                             if (tdas != null)
@@ -81,7 +86,7 @@ namespace ConsoleApp1
                             }
                         }
                     }
-                    else
+                    else if (towntrs != null)
                     {
                         var code = $"{city.Id}01000000";
                         var name = "市辖区";
@@ -102,10 +107,13 @@ namespace ConsoleApp1
                             IsCompleted = false
                         });
                     }
-                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                    db.CommonBulkCopy(countys, null);
-                    string updateCity = $"update Base_Cities set IsCompleted =1 where CityId= '{city.CityId}'";
-                    conn.Execute(updateCity);
+                    if (countys.Count > 0)
+                    {
+                        SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                        db.CommonBulkCopy(countys, null);
+                        string updateCity = $"update Base_Cities set IsCompleted =1 where CityId= '{city.CityId}'";
+                        conn.Execute(updateCity);
+                    }
                 }
                 Console.WriteLine("区县结束");
             }

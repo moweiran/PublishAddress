@@ -19,7 +19,7 @@ namespace ConsoleApp1
             List<Base_Counties> countys = new List<Base_Counties>();
             using (IDbConnection conn = DBHelper.Connection)
             {
-                string sQuery = "SELECT Id,Code,CountyId,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName,IsHasChildren FROM Base_Counties where IsCompleted!=1";
+                string sQuery = "SELECT Id,Code,CountyId,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName,IsHasChildren FROM Base_Counties where IsCompleted!=1 and IsHasChildren=1";
                 conn.Open();
                 countys = conn.Query<Base_Counties>(sQuery).ToList();
                 foreach (var county in countys)
@@ -41,40 +41,44 @@ namespace ConsoleApp1
                     Console.WriteLine($"townUrl:{getUrl}");
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
                     HtmlNode rootNode = doc.DocumentNode;
-                    var trs = rootNode.SelectNodes("//tr[@class='towntr']");
-                    if (trs != null)
+                    var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
+                    if (towntrs == null)
                     {
-                        foreach (var tr in trs)
-                        {
-                            var tdas = tr.SelectNodes("./td/a[@href]");
-                            var href = tdas[0].Attributes["href"].Value;
-                            var id = Regex.Match(href, @"[0-9]{9}").Value;
-                            var code = tdas[0].InnerText;
-                            var name = tdas[1].InnerText;
-                            Console.WriteLine($"town:{id},{code},{name}");
-                            towns.Add(new Base_Towns
-                            {
-                                Id = id,
-                                Code = code,
-                                TownId = code,
-                                TownName = name,
-                                ProvinceId = county.ProvinceId,
-                                Province_Id = county.Province_Id,
-                                ProvinceName = county.ProvinceName,
-                                CityId = county.CityId,
-                                City_Id = county.City_Id,
-                                CityName = county.CityName,
-                                CountyId = county.CountyId,
-                                County_Id = county.Id,
-                                CountyName = county.CountyName,
-                                IsCompleted = false
-                            });
-                        }
+                        continue;
                     }
-                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                    db.CommonBulkCopy(towns, null);
-                    string updateCounty = $"update Base_Counties set IsCompleted =1 where CountyId= '{county.CountyId}'";
-                    conn.Execute(updateCounty);
+                    foreach (var tr in towntrs)
+                    {
+                        var tdas = tr.SelectNodes("./td/a[@href]");
+                        var href = tdas[0].Attributes["href"].Value;
+                        var id = Regex.Match(href, @"[0-9]{9}").Value;
+                        var code = tdas[0].InnerText;
+                        var name = tdas[1].InnerText;
+                        Console.WriteLine($"town:{id},{code},{name}");
+                        towns.Add(new Base_Towns
+                        {
+                            Id = id,
+                            Code = code,
+                            TownId = code,
+                            TownName = name,
+                            ProvinceId = county.ProvinceId,
+                            Province_Id = county.Province_Id,
+                            ProvinceName = county.ProvinceName,
+                            CityId = county.CityId,
+                            City_Id = county.City_Id,
+                            CityName = county.CityName,
+                            CountyId = county.CountyId,
+                            County_Id = county.Id,
+                            CountyName = county.CountyName,
+                            IsCompleted = false
+                        });
+                    }
+                    if (towns.Count > 0)
+                    {
+                        SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                        db.CommonBulkCopy(towns, null);
+                        string updateCounty = $"update Base_Counties set IsCompleted =1 where CountyId= '{county.CountyId}'";
+                        conn.Execute(updateCounty);
+                    }
                 }
                 Console.WriteLine("乡镇结束");
             }

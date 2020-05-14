@@ -36,8 +36,12 @@ namespace ConsoleApp1
                     Console.WriteLine($"villageUrl:{getUrl}");
                     HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
                     HtmlNode rootNode = doc.DocumentNode;
-                    var trs = rootNode.SelectNodes("//tr[@class='villagetr']");
-                    foreach (var tr in trs)
+                    var villagetrs = rootNode.SelectNodes("//tr[@class='villagetr']");
+                    if (villagetrs == null)
+                    {
+                        continue;
+                    }
+                    foreach (var tr in villagetrs)
                     {
                         var tds = tr.SelectNodes("./td");
                         var code = tds[0].InnerText;
@@ -57,10 +61,13 @@ namespace ConsoleApp1
                             ProvinceName = town.ProvinceName
                         });
                     }
-                    SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                    db.CommonBulkCopy(villages, null);
-                    string updateTown = $"update Base_Towns set IsCompleted =1 where TownId= '{town.TownId}'";
-                    conn.Execute(updateTown);
+                    if (villages.Count > 0)
+                    {
+                        SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                        db.CommonBulkCopy(villages, null);
+                        string updateTown = $"update Base_Towns set IsCompleted =1 where TownId= '{town.TownId}'";
+                        conn.Execute(updateTown);
+                    }
                 }
                 Console.WriteLine("村结束");
             }            
