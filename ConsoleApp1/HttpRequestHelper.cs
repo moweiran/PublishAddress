@@ -60,6 +60,7 @@ namespace ConsoleApp1
                 {
                     request.Abort();
                 }
+                System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
             }
             return result;
         }
