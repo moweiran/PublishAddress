@@ -15,8 +15,7 @@ namespace ConsoleApp1
     {
         public void Handle(string url)
         {
-            List<Base_Towns> towns = new List<Base_Towns>();
-            List<Base_Villages> villages = new List<Base_Villages>();
+            List<Base_Towns> towns = new List<Base_Towns>();           
             using (IDbConnection conn = DBHelper.Connection)
             {
                 string sQuery = "SELECT Id,Code,TownId,TownName,CountyId,County_Id,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Towns  where IsCompleted!=1";
@@ -24,6 +23,7 @@ namespace ConsoleApp1
                 towns = conn.Query<Base_Towns>(sQuery).ToList();
                 foreach (var town in towns)
                 {
+                    List<Base_Villages> villages = new List<Base_Villages>();
                     var getUrl = string.Empty;
                     if (string.IsNullOrWhiteSpace(town.County_Id))
                     {

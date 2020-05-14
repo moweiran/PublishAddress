@@ -20,7 +20,7 @@ namespace ConsoleApp1
                 })
                 .Execute(() =>
                 {
-                    var html = HttpServiceHelper.Get(url, 3);
+                    var html = HttpServiceHelper.Get(url, 2);
                     doc.LoadHtml(html);
                 });    //要执行的方法
             Thread.Sleep(100);

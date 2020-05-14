@@ -34,6 +34,7 @@ namespace ConsoleApp1
                 request.Method = "GET";
                 request.KeepAlive = false;
                 request.Timeout = timeout * 1000;
+                request.Headers.Add(HttpRequestHeader.UserAgent, "Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.113 Safari/537.36");
                 //获取服务端返回
                 response = (HttpWebResponse)request.GetResponse();
                 //获取服务端返回数据
