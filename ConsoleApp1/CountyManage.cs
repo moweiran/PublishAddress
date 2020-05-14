@@ -25,88 +25,93 @@ namespace ConsoleApp1
                 foreach (var city in citys)
                 {
                     List<Base_Counties> countys = new List<Base_Counties>();
-                    var getUrl = $"{url}{city.ProvinceId}/{city.Id}.html";
-                    Console.WriteLine($"countyUrl:{getUrl}");
-                    HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
-                    HtmlNode rootNode = doc.DocumentNode;
-                    var countytrs = rootNode.SelectNodes("//tr[@class='countytr']");
-                    var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
-                    if (countytrs == null && towntrs == null)
+                    PolicyHelper.RetryForever(() =>
                     {
-                        continue;
-                    }
-                    if (countytrs != null)
-                    {
-                        foreach (var tr in countytrs)
+                        var getUrl = $"{url}{city.ProvinceId}/{city.Id}.html";
+                        Console.WriteLine($"countyUrl:{getUrl}");
+                        HtmlDocument doc = new HtmlDocument();
+                        var html = HttpServiceHelper.Get(getUrl, 2);
+                        doc.LoadHtml(html);
+                        HtmlNode rootNode = doc.DocumentNode;
+                        var countytrs = rootNode.SelectNodes("//tr[@class='countytr']");
+                        var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
+                        if (countytrs == null && towntrs == null)
                         {
-                            var tdas = tr.SelectNodes("./td/a[@href]");
-                            if (tdas != null)
+                            throw new Exception();
+                        }
+                        if (countytrs != null)
+                        {
+                            foreach (var tr in countytrs)
                             {
-                                var href = tdas[0].Attributes["href"].Value;
-                                var id = Regex.Match(href, @"[0-9]{6}").Value;
-                                var code = tdas[0].InnerText;
-                                var name = tdas[1].InnerText;
-                                Console.WriteLine($"county:{id},{code},{name}");
-                                countys.Add(new Base_Counties
+                                var tdas = tr.SelectNodes("./td/a[@href]");
+                                if (tdas != null)
                                 {
-                                    Id = id,
-                                    Code = code,
-                                    CountyId = code,
-                                    CountyName = name,
-                                    ProvinceId = city.ProvinceId,
-                                    Province_Id = city.Province_Id,
-                                    ProvinceName = city.ProvinceName,
-                                    CityId = city.CityId,
-                                    City_Id = city.Id,
-                                    CityName = city.CityName,
-                                    IsHasChildren = true,
-                                    IsCompleted = false
-                                });
-                            }
-                            else
-                            {
-                                var code = tr.ChildNodes[0].InnerText;
-                                var name = tr.ChildNodes[1].InnerText;
-                                Console.WriteLine($"county:{code},{name}");
-                                countys.Add(new Base_Counties
+                                    var href = tdas[0].Attributes["href"].Value;
+                                    var id = Regex.Match(href, @"[0-9]{6}").Value;
+                                    var code = tdas[0].InnerText;
+                                    var name = tdas[1].InnerText;
+                                    Console.WriteLine($"county:{id},{code},{name}");
+                                    countys.Add(new Base_Counties
+                                    {
+                                        Id = id,
+                                        Code = code,
+                                        CountyId = code,
+                                        CountyName = name,
+                                        ProvinceId = city.ProvinceId,
+                                        Province_Id = city.Province_Id,
+                                        ProvinceName = city.ProvinceName,
+                                        CityId = city.CityId,
+                                        City_Id = city.Id,
+                                        CityName = city.CityName,
+                                        IsHasChildren = true,
+                                        IsCompleted = false
+                                    });
+                                }
+                                else
                                 {
-                                    Id = "",
-                                    Code = code,
-                                    CountyId = code,
-                                    CountyName = name,
-                                    ProvinceId = city.ProvinceId,
-                                    Province_Id = city.Province_Id,
-                                    ProvinceName = city.ProvinceName,
-                                    CityId = city.CityId,
-                                    City_Id = city.Id,
-                                    CityName = city.CityName,
-                                    IsHasChildren = false,
-                                    IsCompleted = false
-                                });
+                                    var code = tr.ChildNodes[0].InnerText;
+                                    var name = tr.ChildNodes[1].InnerText;
+                                    Console.WriteLine($"county:{code},{name}");
+                                    countys.Add(new Base_Counties
+                                    {
+                                        Id = "",
+                                        Code = code,
+                                        CountyId = code,
+                                        CountyName = name,
+                                        ProvinceId = city.ProvinceId,
+                                        Province_Id = city.Province_Id,
+                                        ProvinceName = city.ProvinceName,
+                                        CityId = city.CityId,
+                                        City_Id = city.Id,
+                                        CityName = city.CityName,
+                                        IsHasChildren = false,
+                                        IsCompleted = false
+                                    });
+                                }
                             }
                         }
-                    }
-                    else if (towntrs != null)
-                    {
-                        var code = $"{city.Id}01000000";
-                        var name = "市辖区";
-                        Console.WriteLine($"county:{code},市辖区");
-                        countys.Add(new Base_Counties
+                        else if (towntrs != null)
                         {
-                            Id = "",
-                            Code = code,
-                            CountyId = code,
-                            CountyName = name,
-                            ProvinceId = city.ProvinceId,
-                            Province_Id = city.Province_Id,
-                            ProvinceName = city.ProvinceName,
-                            CityId = city.CityId,
-                            City_Id = city.Id,
-                            CityName = city.CityName,
-                            IsHasChildren = true,
-                            IsCompleted = false
-                        });
-                    }
+                            var code = $"{city.Id}01000000";
+                            var name = "市辖区";
+                            Console.WriteLine($"county:{code},市辖区");
+                            countys.Add(new Base_Counties
+                            {
+                                Id = "",
+                                Code = code,
+                                CountyId = code,
+                                CountyName = name,
+                                ProvinceId = city.ProvinceId,
+                                Province_Id = city.Province_Id,
+                                ProvinceName = city.ProvinceName,
+                                CityId = city.CityId,
+                                City_Id = city.Id,
+                                CityName = city.CityName,
+                                IsHasChildren = true,
+                                IsCompleted = false
+                            });
+                        }
+                    });
                     if (countys.Count > 0)
                     {
                         SqlBulkCopyHelper db = new SqlBulkCopyHelper();

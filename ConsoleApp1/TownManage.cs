@@ -24,54 +24,59 @@ namespace ConsoleApp1
                 countys = conn.Query<Base_Counties>(sQuery).ToList();
                 foreach (var county in countys)
                 {
-                    List<Base_Towns> towns = new List<Base_Towns>();
                     if (!county.IsHasChildren)
                     {
                         continue;
                     }
-                    var getUrl = string.Empty;
-                    if (string.IsNullOrWhiteSpace(county.Id))
+                    List<Base_Towns> towns = new List<Base_Towns>();
+                    PolicyHelper.RetryForever(() =>
                     {
-                        getUrl = $"{url}{county.ProvinceId}/{county.City_Id}.html";
-                    }
-                    else if (county.IsHasChildren)
-                    {
-                        getUrl = $"{url}{county.ProvinceId}/{county.City_Id.Substring(2, 2)}/{county.Id}.html";
-                    }
-                    Console.WriteLine($"townUrl:{getUrl}");
-                    HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
-                    HtmlNode rootNode = doc.DocumentNode;
-                    var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
-                    if (towntrs == null)
-                    {
-                        continue;
-                    }
-                    foreach (var tr in towntrs)
-                    {
-                        var tdas = tr.SelectNodes("./td/a[@href]");
-                        var href = tdas[0].Attributes["href"].Value;
-                        var id = Regex.Match(href, @"[0-9]{9}").Value;
-                        var code = tdas[0].InnerText;
-                        var name = tdas[1].InnerText;
-                        Console.WriteLine($"town:{id},{code},{name}");
-                        towns.Add(new Base_Towns
+                        var getUrl = string.Empty;
+                        if (string.IsNullOrWhiteSpace(county.Id))
                         {
-                            Id = id,
-                            Code = code,
-                            TownId = code,
-                            TownName = name,
-                            ProvinceId = county.ProvinceId,
-                            Province_Id = county.Province_Id,
-                            ProvinceName = county.ProvinceName,
-                            CityId = county.CityId,
-                            City_Id = county.City_Id,
-                            CityName = county.CityName,
-                            CountyId = county.CountyId,
-                            County_Id = county.Id,
-                            CountyName = county.CountyName,
-                            IsCompleted = false
-                        });
-                    }
+                            getUrl = $"{url}{county.ProvinceId}/{county.City_Id}.html";
+                        }
+                        else if (county.IsHasChildren)
+                        {
+                            getUrl = $"{url}{county.ProvinceId}/{county.City_Id.Substring(2, 2)}/{county.Id}.html";
+                        }
+                        Console.WriteLine($"townUrl:{getUrl}");
+                        HtmlDocument doc = new HtmlDocument();
+                        var html = HttpServiceHelper.Get(getUrl, 2);
+                        doc.LoadHtml(html);
+                        HtmlNode rootNode = doc.DocumentNode;
+                        var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
+                        if (towntrs == null)
+                        {
+                            throw new Exception();
+                        }
+                        foreach (var tr in towntrs)
+                        {
+                            var tdas = tr.SelectNodes("./td/a[@href]");
+                            var href = tdas[0].Attributes["href"].Value;
+                            var id = Regex.Match(href, @"[0-9]{9}").Value;
+                            var code = tdas[0].InnerText;
+                            var name = tdas[1].InnerText;
+                            Console.WriteLine($"town:{id},{code},{name}");
+                            towns.Add(new Base_Towns
+                            {
+                                Id = id,
+                                Code = code,
+                                TownId = code,
+                                TownName = name,
+                                ProvinceId = county.ProvinceId,
+                                Province_Id = county.Province_Id,
+                                ProvinceName = county.ProvinceName,
+                                CityId = county.CityId,
+                                City_Id = county.City_Id,
+                                CityName = county.CityName,
+                                CountyId = county.CountyId,
+                                County_Id = county.Id,
+                                CountyName = county.CountyName,
+                                IsCompleted = false
+                            });
+                        }
+                    });
                     if (towns.Count > 0)
                     {
                         SqlBulkCopyHelper db = new SqlBulkCopyHelper();

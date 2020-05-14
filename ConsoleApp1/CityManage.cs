@@ -9,6 +9,7 @@ using ConsoleApp1.DbHelper;
 using Dapper;
 using HtmlAgilityPack;
 using Models;
+using Polly;
 
 namespace ConsoleApp1
 {
@@ -25,35 +26,40 @@ namespace ConsoleApp1
                 foreach (var province in provinces)
                 {
                     List<Base_Cities> citys = new List<Base_Cities>();
-                    var getUrl = $"{url}{province.Id}.html";
-                    Console.WriteLine($"cityUrl:{getUrl}");
-                    HtmlDocument doc = HtmlHelper.GetDocument(getUrl);
-                    HtmlNode rootNode = doc.DocumentNode;
-                    var citytrs = rootNode.SelectNodes("//tr[@class='citytr']");
-                    if (citytrs != null)
+                    PolicyHelper.RetryForever(() =>
                     {
-                        continue;
-                    }
-                    foreach (var citytr in citytrs)
-                    {
-                        var cityas = citytr.SelectNodes("./td/a[@href]");
-                        var href = cityas[0].Attributes["href"].Value;
-                        var id = Regex.Match(href, @"[0-9]{4}").Value;
-                        var code = cityas[0].InnerText;
-                        var name = cityas[1].InnerText;
-                        Console.WriteLine($"city:{id},{code},{name}");
-                        citys.Add(new Base_Cities
+                        var getUrl = $"{url}{province.Id}.html";
+                        Console.WriteLine($"cityUrl:{getUrl}");                       
+                        HtmlDocument doc = new HtmlDocument();
+                        var html = HttpServiceHelper.Get(getUrl, 2);
+                        doc.LoadHtml(html);
+                        HtmlNode rootNode = doc.DocumentNode;
+                        var citytrs = rootNode.SelectNodes("//tr[@class='citytr']");
+                        if (citytrs != null)
                         {
-                            Id = id,
-                            Code = code,
-                            CityId = code,
-                            CityName = name,
-                            ProvinceId = province.ProvinceId,
-                            Province_Id = province.Id,
-                            ProvinceName = province.ProvinceName,
-                            IsCompleted = false
-                        });
-                    }
+                            throw new Exception();
+                        }
+                        foreach (var citytr in citytrs)
+                        {
+                            var cityas = citytr.SelectNodes("./td/a[@href]");
+                            var href = cityas[0].Attributes["href"].Value;
+                            var id = Regex.Match(href, @"[0-9]{4}").Value;
+                            var code = cityas[0].InnerText;
+                            var name = cityas[1].InnerText;
+                            Console.WriteLine($"city:{id},{code},{name}");
+                            citys.Add(new Base_Cities
+                            {
+                                Id = id,
+                                Code = code,
+                                CityId = code,
+                                CityName = name,
+                                ProvinceId = province.ProvinceId,
+                                Province_Id = province.Id,
+                                ProvinceName = province.ProvinceName,
+                                IsCompleted = false
+                            });
+                        }
+                    });
                     if (citys.Count > 0)
                     {
                         SqlBulkCopyHelper db = new SqlBulkCopyHelper();
