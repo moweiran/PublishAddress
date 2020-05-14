@@ -43,7 +43,8 @@ namespace ConsoleApp1
                         var villagetrs = rootNode.SelectNodes("//tr[@class='villagetr']");
                         if (villagetrs == null)
                         {
-                            throw new Exception();
+                            Console.WriteLine(html);
+                            throw new Exception(html);
                         }
                         foreach (var tr in villagetrs)
                         {
