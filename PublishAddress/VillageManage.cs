@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using ConsoleApp1.DbHelper;
 using Dapper;
@@ -18,7 +20,7 @@ namespace ConsoleApp1
             List<Base_Towns> towns = new List<Base_Towns>();
             using (IDbConnection conn = DBHelper.Connection)
             {
-                string sQuery = "SELECT Id,Code,TownId,TownName,CountyId,County_Id,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Towns  where IsCompleted!=1";
+                string sQuery = "SELECT Id,Code,TownId,TownName,CountyId,County_Id,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName FROM Base_Towns where IsCompleted!=1";
                 conn.Open();
                 towns = conn.Query<Base_Towns>(sQuery).ToList();
                 foreach (var town in towns)
@@ -44,6 +46,8 @@ namespace ConsoleApp1
                         if (villagetrs == null)
                         {
                             Console.WriteLine(html);
+                            var jsEvel = new Regex("(?<=<script(.)*?>)([\\s\\S](?!<script))*?(?=</script>)", RegexOptions.IgnoreCase).Matches(html);
+                            Thread.Sleep(10 * 1000);//解决获取的Html 提示请开启JavaScript并刷新该页.设置延迟时间久一些
                             throw new Exception(html);
                         }
                         foreach (var tr in villagetrs)
