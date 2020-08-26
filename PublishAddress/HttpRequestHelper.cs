@@ -94,5 +94,15 @@ namespace ConsoleApp1
             }
             return result;
         }
+
+        public static string PolicyGet(string url)
+        {
+            var response = string.Empty;
+            PolicyHelper.RetryForever(() =>
+            {
+                response = Get(url, 2000);
+            });
+            return response;
+        }
     }
 }
