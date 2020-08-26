@@ -25,30 +25,27 @@ namespace ConsoleApp1
             }
             if (provinces.Count == 0)
             {
-                PolicyHelper.RetryForever(() =>
+                HtmlDocument doc = new HtmlDocument();
+                var html = HttpServiceHelper.PolicyGet($"{url}index.html");
+                doc.LoadHtml(html);
+                HtmlNode rootNode = doc.DocumentNode;
+                var provinceas = rootNode.SelectNodes("//tr[@class='provincetr']/td/a[@href]");
+                foreach (var provincea in provinceas)
                 {
-                    HtmlDocument doc = new HtmlDocument();
-                    var html = HttpServiceHelper.Get($"{url}index.html", 2);
-                    doc.LoadHtml(html);
-                    HtmlNode rootNode = doc.DocumentNode;
-                    var provinceas = rootNode.SelectNodes("//tr[@class='provincetr']/td/a[@href]");
-                    foreach (var provincea in provinceas)
+                    var href = provincea.Attributes["href"].Value;
+                    var id = Regex.Match(href, @"[0-9]{2}").Value;
+                    var name = provincea.InnerText;
+                    var code = id;
+                    Console.WriteLine($"province:{id},{code},{name}");
+                    provinces.Add(new Base_Provinces
                     {
-                        var href = provincea.Attributes["href"].Value;
-                        var id = Regex.Match(href, @"[0-9]{2}").Value;
-                        var name = provincea.InnerText;
-                        var code = id;
-                        Console.WriteLine($"province:{id},{code},{name}");
-                        provinces.Add(new Base_Provinces
-                        {
-                            Id = id,
-                            Code = code,
-                            ProvinceId = code,
-                            ProvinceName = name,
-                            IsCompleted = false
-                        });
-                    }
-                });
+                        Id = id,
+                        Code = code,
+                        ProvinceId = code,
+                        ProvinceName = name,
+                        IsCompleted = false
+                    });
+                }
                 SqlBulkCopyHelper db = new SqlBulkCopyHelper();
                 db.CommonBulkCopy(provinces, null);
                 Console.WriteLine("省份结束");

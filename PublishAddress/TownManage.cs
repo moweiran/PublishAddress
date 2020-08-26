@@ -4,6 +4,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using ConsoleApp1.DbHelper;
 using Dapper;
@@ -22,15 +23,12 @@ namespace ConsoleApp1
                 string sQuery = "SELECT Id,Code,CountyId,CountyName,CityId,City_Id,CityName,ProvinceId,Province_Id,ProvinceName,IsHasChildren FROM Base_Counties where IsCompleted!=1 and IsHasChildren=1";
                 conn.Open();
                 countys = conn.Query<Base_Counties>(sQuery).ToList();
-                foreach (var county in countys)
+
+                Parallel.ForEach(countys, new ParallelOptions { MaxDegreeOfParallelism = 4 }, (county) =>
                 {
-                    if (!county.IsHasChildren)
+                    if (county.IsHasChildren)
                     {
-                        continue;
-                    }
-                    List<Base_Towns> towns = new List<Base_Towns>();
-                    PolicyHelper.RetryForever(() =>
-                    {
+                        List<Base_Towns> towns = new List<Base_Towns>();
                         var getUrl = string.Empty;
                         if (string.IsNullOrWhiteSpace(county.Id))
                         {
@@ -42,14 +40,10 @@ namespace ConsoleApp1
                         }
                         Console.WriteLine($"townUrl:{getUrl}");
                         HtmlDocument doc = new HtmlDocument();
-                        var html = HttpServiceHelper.Get(getUrl, 2);
+                        var html = HttpServiceHelper.PolicyGet(getUrl);
                         doc.LoadHtml(html);
                         HtmlNode rootNode = doc.DocumentNode;
                         var towntrs = rootNode.SelectNodes("//tr[@class='towntr']");
-                        if (towntrs == null)
-                        {
-                            throw new Exception();
-                        }
                         foreach (var tr in towntrs)
                         {
                             var tdas = tr.SelectNodes("./td/a[@href]");
@@ -76,15 +70,16 @@ namespace ConsoleApp1
                                 IsCompleted = false
                             });
                         }
-                    });
-                    if (towns.Count > 0)
-                    {
-                        SqlBulkCopyHelper db = new SqlBulkCopyHelper();
-                        db.CommonBulkCopy(towns, null);
-                        string updateCounty = $"update Base_Counties set IsCompleted =1 where CountyId= '{county.CountyId}'";
-                        conn.Execute(updateCounty);
+                        if (towns.Count > 0)
+                        {
+                            SqlBulkCopyHelper db = new SqlBulkCopyHelper();
+                            db.CommonBulkCopy(towns, null);
+                            string updateCounty = $"update Base_Counties set IsCompleted =1 where CountyId= '{county.CountyId}'";
+                            conn.Execute(updateCounty);
+                        }
                     }
-                }
+                    
+                });
                 Console.WriteLine("乡镇结束");
             }
         }

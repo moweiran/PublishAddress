@@ -1,15 +1,22 @@
-﻿using System;
+﻿using Jint;
+using Polly;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace ConsoleApp1
 {
     public class HttpServiceHelper
     {
+        public static string wzws_cid = "";
+        public static string sf_cookie = "";
+
         public static bool CheckValidationResult(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors errors)
         {
             //直接确认，否则打不开    
@@ -35,6 +42,17 @@ namespace ConsoleApp1
             var r = new Random().Next(max);
             return list[r];
         }
+
+        private static CookieContainer GetCookies()
+        {
+            CookieContainer myCookieContainer = new CookieContainer();
+            Cookie clientCookie1 = new Cookie("wzws_cid", wzws_cid);
+            Cookie clientCookie2 = new Cookie("sf_cookie", sf_cookie);
+            myCookieContainer.Add(clientCookie1);
+            myCookieContainer.Add(clientCookie2);
+            return myCookieContainer;
+        }
+
         public static string Get(string url, int timeout)
         {
             System.GC.Collect();//垃圾回收，回收没有正常关闭的http连接
@@ -54,14 +72,34 @@ namespace ConsoleApp1
                 request.KeepAlive = false;
                 request.Timeout = timeout * 1000;
                 request.Headers.Add(HttpRequestHeader.UserAgent, RandomUseAgent());
+
+                if (!string.IsNullOrWhiteSpace(wzws_cid) && url.IndexOf("wzwschallenge") > 0)
+                {
+                    request.CookieContainer = GetCookies();
+                }
                 //获取服务端返回
                 using (response = (HttpWebResponse)request.GetResponse())
                 {
                     //获取服务端返回数据
                     using (sr = new StreamReader(response.GetResponseStream(), Encoding.GetEncoding("GB2312")))
                     {
-
                         result = sr.ReadToEnd().Trim();
+                        var cookies = response.Headers["set-Cookie"];
+                        if (!string.IsNullOrWhiteSpace(cookies))
+                        {
+                            var arrCookies = cookies.Split(";");
+                            foreach (var arrcookie in arrCookies)
+                            {
+                                if (arrcookie.Contains("SF_cookie_1"))
+                                {
+                                    sf_cookie = arrcookie.Split("=")[1];
+                                }
+                                if (arrcookie.Contains("wzws_cid"))
+                                {
+                                    wzws_cid = arrcookie.Split("=")[1];
+                                }
+                            }
+                        }
                     }
                     //using (sr = new StreamReader(response.GetResponseStream(), Encoding.Default))
                     //{
@@ -98,10 +136,45 @@ namespace ConsoleApp1
         public static string PolicyGet(string url)
         {
             var response = string.Empty;
-            PolicyHelper.RetryForever(() =>
+            Policy.Handle<Exception>()   //指定需要重试的异常类型
+                     .RetryForever((ex, count, context) =>
+                     {     //指定发生异常重试的次数
+                         Console.WriteLine($"重试次数{count},异常{ex.Message}");
+                         Thread.Sleep(100);
+                     })
+                     .Execute(() =>
+                     {
+                         response = GetResponse(url);
+                     });
+            return response;
+        }
+
+        private static string GetResponse(string url)
+        {
+            string response = Get(url, 2000);
+            if (response.Contains("encode_version = 'sojson.v5'"))
             {
-                response = Get(url, 2000);
-            });
+                Console.WriteLine(response);
+                var matchResult = new Regex("(?<=<script(.)*?>)([\\s\\S](?!<script))*?(?=</script>)", RegexOptions.IgnoreCase).Matches(response);
+                var jsEvel = matchResult[0].Value;
+                jsEvel = jsEvel.Replace(@"atob(", "window[\"atob\"](");
+                var jsGetUrl = "function getURL(){ var window = {};" + jsEvel + " return window['location'];}";
+                var engine = new Engine();
+                engine.Execute(jsGetUrl);
+                try
+                {
+                    var r = engine.Invoke("getURL");
+                    var newurl = "http://www.stats.gov.cn" + r;
+                    Console.WriteLine(newurl);
+                    Thread.Sleep(2 * 1000);//解决获取的Html 提示请开启JavaScript并刷新该页.设置延迟时间久一些
+                    response = GetResponse(newurl);
+                }
+                catch (Exception ex)
+                {
+                    Thread.Sleep(2 * 1000);//解决获取的Html 提示请开启JavaScript并刷新该页.设置延迟时间久一些
+                    throw new Exception(response);
+                }
+            }
             return response;
         }
     }
