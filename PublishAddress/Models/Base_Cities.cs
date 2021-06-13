@@ -14,7 +14,7 @@ namespace Models
         public string CityName { get; set; }
         public string ProvinceId { get; set; }
         public string Province_Id { get; set; }
-        public string ProvinceName { get; internal set; }
+        public string ProvinceName { get; set; }
         public bool? IsCompleted { get; set; }
     }
 }
